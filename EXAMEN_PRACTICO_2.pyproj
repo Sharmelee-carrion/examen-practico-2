@@ -1,0 +1,59 @@
+import sqlite3
+
+# Crear una conexión a la base de datos
+conn = sqlite3.connect('empresa.db')
+c = conn.cursor()
+
+# Crear la tabla 'empleados' si no existe
+c.execute('''CREATE TABLE IF NOT EXISTS empleados
+             (id INTEGER PRIMARY KEY AUTOINCREMENT,
+              nombre TEXT,
+              apellidos TEXT,
+              sueldo_bruto REAL,
+              categoria TEXT,
+              monto_aumento REAL,
+              sueldo_neto REAL)''')
+
+# Función para calcular el porcentaje de aumento y el sueldo neto
+def calcular_sueldo_neto(sueldo_bruto):
+    if sueldo_bruto <= 1000:
+        porcentaje_aumento = 0.10
+    elif sueldo_bruto <= 2000:
+        porcentaje_aumento = 0.20
+    elif sueldo_bruto <= 4000:
+        porcentaje_aumento = 0.30
+    else:
+        porcentaje_aumento = 0.40
+    
+    monto_aumento = porcentaje_aumento * sueldo_bruto
+    sueldo_neto = sueldo_bruto + monto_aumento
+    
+    return monto_aumento, sueldo_neto
+
+# Función para ingresar un empleado a la base de datos
+def ingresar_empleado(nombre, apellidos, sueldo_bruto, categoria):
+    monto_aumento, sueldo_neto = calcular_sueldo_neto(sueldo_bruto)
+    c.execute("INSERT INTO empleados (nombre, apellidos, sueldo_bruto, categoria, monto_aumento, sueldo_neto) VALUES (?, ?, ?, ?, ?, ?)",
+              (nombre, apellidos, sueldo_bruto, categoria, monto_aumento, sueldo_neto))
+    conn.commit()
+
+# Función para mostrar la lista de empleados
+def mostrar_empleados():
+    c.execute("SELECT * FROM empleados")
+    empleados = c.fetchall()
+    for empleado in empleados:
+        print(f"{empleado[1]} {empleado[2]} - {empleado[3]} - {empleado[5]} - {empleado[6]}")
+    total_sueldos_netos = sum(empleado[6] for empleado in empleados)
+    print(f"\nTotal de Sueldos Netos: {total_sueldos_netos}")
+
+# Ejemplo de uso
+ingresar_empleado("Juan", "Pérez", 1500, "A")
+ingresar_empleado("María", "Gómez", 3000, "B")
+ingresar_empleado("Pedro", "Martínez", 5000, "C")
+
+print("Lista de empleados:")
+mostrar_empleados()
+
+# Cerrar la conexión a la base de datos
+conn.close()
+
